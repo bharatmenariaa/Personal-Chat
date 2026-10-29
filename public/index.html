@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Personal Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="connectOverlay" class="overlay">
+    <div class="overlay-layout">
+
+      <!-- LEFT: demo video -->
+      <div class="demo-card">
+
+        <div class="demo-header">
+          <span class="demo-title">
+            <i data-lucide="play-circle"></i>
+            How it works
+          </span>
+          <div class="demo-controls">
+            <button id="muteBtn" class="demo-btn" title="Toggle audio">
+              <i data-lucide="volume-x"></i>
+            </button>
+            <button id="fullscreenBtn" class="demo-btn" title="Fullscreen">
+              <i data-lucide="maximize-2"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="demo-video-wrap" id="demoVideoWrap">
+          <video
+            id="demoVideo"
+            src="./personal_chat_demo.mp4"
+            autoplay
+            loop
+            muted
+            playsinline
+            preload="metadata"
+          ></video>
+        </div>
+
+        <div class="demo-steps">
+          <div class="step">
+            <span class="step-num">1</span>
+            <span>Generate or enter a Session Key</span>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <span>Set a 6-digit Pair Code — share both with your peer</span>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <span>One person creates, the other joins</span>
+          </div>
+          <div class="step">
+            <span class="step-num">4</span>
+            <span>Messages are E2E encrypted — server sees nothing</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: form -->
+      <div class="overlay-card">
+
+        <div class="overlay-brand">
+          <div class="brand-left">
+            <i data-lucide="shield-check"></i>
+            <span>Personal Chat</span>
+          </div>
+          <button id="themeToggleOverlay" class="theme-mini-btn" title="Theme">
+            <i id="themeOverlayIcon" data-lucide="moon"></i>
+          </button>
+        </div>
+
+        <div class="overlay-fields">
+          <div class="field">
+            <label for="roomKey">Session Key</label>
+            <div class="field-row">
+              <input id="roomKey" maxlength="12" placeholder="12 characters"
+                autocomplete="off" spellcheck="false" />
+              <button id="genKey" class="field-btn" title="Generate">
+                <i data-lucide="refresh-cw"></i>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="pairCode">Pair Code</label>
+            <input id="pairCode" maxlength="6" inputmode="numeric"
+              placeholder="6 digits" type="password" />
+          </div>
+        </div>
+
+        <div class="overlay-actions">
+          <button id="create" class="btn-main">Create Room</button>
+          <button id="join" class="btn-alt">Join</button>
+        </div>
+
+        <div class="overlay-footer">
+          End-to-End Encrypted · Personal Project
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="appMain" class="app-main" style="display:none">
+    <div class="chat-shell">
+
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="brand-mini">
+            <i data-lucide="shield-check"></i>
+          </div>
+          <div id="status" class="status-pill">
+            <span class="dot"></span>
+            <span class="status-text">0 Peers</span>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button id="themeToggle" class="top-btn" title="Theme">
+            <i id="themeIcon" data-lucide="moon"></i>
+          </button>
+          <button id="copyInvite" class="top-btn" title="Copy Invite" style="display:none">
+            <i data-lucide="link-2"></i>
+          </button>
+          <button id="lockRoom" class="top-btn" title="Lock Room" style="display:none">
+            <i data-lucide="lock"></i>
+          </button>
+          <button id="closeRoom" class="top-btn danger" title="Close Room" style="display:none">
+            <i data-lucide="power"></i>
+          </button>
+          <button id="leaveRoom" class="top-btn danger" title="Leave Room" style="display:none">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+      </header>
+
+      <div id="chat" class="chat-area">
+        <div class="empty-state">
+          <div class="empty-ring">
+            <i data-lucide="radio-tower"></i>
+          </div>
+          <p>Secure channel open</p>
+          <span class="empty-hint">Messages are end-to-end encrypted</span>
+        </div>
+      </div>
+
+      <div class="input-bar">
+        <div id="typing" class="typing-hint"></div>
+        <div class="composer">
+          <textarea id="input" rows="1" placeholder="Type a message..." disabled></textarea>
+          <button id="send" class="send-btn" disabled>
+            <i data-lucide="arrow-up"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // theme
+    const themeBtn         = document.getElementById("themeToggle");
+    const themeIcon        = document.getElementById("themeIcon");
+    const overlayThemeBtn  = document.getElementById("themeToggleOverlay");
+    const overlayThemeIcon = document.getElementById("themeOverlayIcon");
+
+    function applyTheme(dark) {
+      document.body.classList.toggle("dark", dark);
+      themeIcon.setAttribute("data-lucide", dark ? "sun" : "moon");
+      overlayThemeIcon.setAttribute("data-lucide", dark ? "sun" : "moon");
+      localStorage.setItem("theme", dark ? "dark" : "light");
+      lucide.createIcons();
+    }
+
+    themeBtn.addEventListener("click", () =>
+      applyTheme(!document.body.classList.contains("dark"))
+    );
+    overlayThemeBtn.addEventListener("click", () =>
+      applyTheme(!document.body.classList.contains("dark"))
+    );
+
+    applyTheme(localStorage.getItem("theme") === "dark");
+
+    // video controls
+    const demoVideo      = document.getElementById("demoVideo");
+    const muteBtn        = document.getElementById("muteBtn");
+    const fullscreenBtn  = document.getElementById("fullscreenBtn");
+    const demoVideoWrap  = document.getElementById("demoVideoWrap");
+
+    muteBtn.addEventListener("click", () => {
+      demoVideo.muted = !demoVideo.muted;
+      const icon = muteBtn.querySelector("i");
+      icon.setAttribute("data-lucide", demoVideo.muted ? "volume-x" : "volume-2");
+      lucide.createIcons();
+    });
+
+    fullscreenBtn.addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        demoVideoWrap.requestFullscreen();
+        const icon = fullscreenBtn.querySelector("i");
+        icon.setAttribute("data-lucide", "minimize-2");
+        lucide.createIcons();
+      } else {
+        document.exitFullscreen();
+        const icon = fullscreenBtn.querySelector("i");
+        icon.setAttribute("data-lucide", "maximize-2");
+        lucide.createIcons();
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      if (!document.fullscreenElement) {
+        const icon = fullscreenBtn.querySelector("i");
+        icon.setAttribute("data-lucide", "maximize-2");
+        lucide.createIcons();
+      }
+    });
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="./app.js"></script>
+
+</body>
+</html>

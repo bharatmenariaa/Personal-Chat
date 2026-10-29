@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: personal-chat
+    runtime: rust
+    plan: free
+    buildCommand: cargo build --release
+    startCommand: ./target/release/personal-chat
